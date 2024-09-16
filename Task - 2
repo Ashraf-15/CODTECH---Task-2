@@ -1,0 +1,138 @@
+import datetime
+
+# In-memory data storage for library items and transactions
+library_items = []
+checked_out_items = []
+
+# Fine configuration
+fine_per_day = 1  # Fine amount per day of delay
+
+
+# Function to add a new library item
+def add_item(item_type, title, author, category, quantity):
+    item = {
+        "id": len(library_items) + 1,
+        "type": item_type,
+        "title": title,
+        "author": author,
+        "category": category,
+        "quantity": quantity,
+        "available_quantity": quantity
+    }
+    library_items.append(item)
+    print(f"{item_type} '{title}' added successfully.")
+
+
+# Function to check out an item
+def check_out_item(item_id, user, due_date):
+    for item in library_items:
+        if item["id"] == item_id and item["available_quantity"] > 0:
+            item["available_quantity"] -= 1
+            transaction = {
+                "item_id": item_id,
+                "title": item["title"],
+                "user": user,
+                "due_date": due_date,
+                "checked_out_date": datetime.datetime.now(),
+                "status": "Checked Out"
+            }
+            checked_out_items.append(transaction)
+            print(f"'{item['title']}' checked out by {user}. Due date: {due_date}")
+            return
+    print(f"Item ID {item_id} not available for check out.")
+
+
+# Function to return an item
+def return_item(item_id, user):
+    for transaction in checked_out_items:
+        if transaction["item_id"] == item_id and transaction["user"] == user and transaction["status"] == "Checked Out":
+            transaction["status"] = "Returned"
+            for item in library_items:
+                if item["id"] == item_id:
+                    item["available_quantity"] += 1
+                    break
+            print(f"'{transaction['title']}' returned by {user}.")
+
+            # Check for overdue fines
+            due_date = datetime.datetime.strptime(transaction["due_date"], "%Y-%m-%d")
+            current_date = datetime.datetime.now()
+            if current_date > due_date:
+                overdue_days = (current_date - due_date).days
+                fine = overdue_days * fine_per_day
+                print(f"Overdue fine for {overdue_days} days is ${fine}.")
+            return
+    print(f"Item ID {item_id} not found or not checked out by {user}.")
+
+
+# Function to search items by title, author, or category
+def search_items(query, search_type="title"):
+    results = [item for item in library_items if query.lower() in item[search_type].lower()]
+    if results:
+        print(f"Search results for {search_type} '{query}':")
+        for item in results:
+            print(f"ID: {item['id']}, Title: {item['title']}, Author: {item['author']}, Category: {item['category']}, Available: {item['available_quantity']}/{item['quantity']}")
+    else:
+        print(f"No items found for {search_type} '{query}'.")
+
+
+# Function to display all library items
+def display_library_items():
+    if not library_items:
+        print("No items in the library.")
+    else:
+        print("Library items:")
+        for item in library_items:
+            print(f"ID: {item['id']}, Title: {item['title']}, Type: {item['type']}, Author: {item['author']}, Category: {item['category']}, Available: {item['available_quantity']}/{item['quantity']}")
+
+
+# Main program loop
+def main():
+    while True:
+        print("\nLibrary Management System")
+        print("1. Add New Item")
+        print("2. Check Out Item")
+        print("3. Return Item")
+        print("4. Search Items")
+        print("5. Display All Items")
+        print("6. Exit")
+
+        choice = input("Enter your choice (1-6): ")
+
+        if choice == '1':
+            item_type = input("Enter item type (Book/Magazine/DVD): ")
+            title = input("Enter item title: ")
+            author = input("Enter item author: ")
+            category = input("Enter item category: ")
+            quantity = int(input("Enter item quantity: "))
+            add_item(item_type, title, author, category, quantity)
+
+        elif choice == '2':
+            item_id = int(input("Enter item ID to check out: "))
+            user = input("Enter your name: ")
+            due_date = input("Enter due date (YYYY-MM-DD): ")
+            check_out_item(item_id, user, due_date)
+
+        elif choice == '3':
+            item_id = int(input("Enter item ID to return: "))
+            user = input("Enter your name: ")
+            return_item(item_id, user)
+
+        elif choice == '4':
+            search_type = input("Search by (title/author/category): ").lower()
+            query = input(f"Enter {search_type}: ")
+            search_items(query, search_type)
+
+        elif choice == '5':
+            display_library_items()
+
+        elif choice == '6':
+            print("Exiting the program.")
+            break
+
+        else:
+            print("Invalid choice. Please select a valid option.")
+
+
+# Run the program
+if __name__ == "__main__":
+    main()
